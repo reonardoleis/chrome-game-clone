@@ -22,7 +22,7 @@ var goal_timer = 0;
 var goal_state = 0;
 var charm_timer = 0;
 var night = false;
-var day_cycle_mode = true;
+var day_cycle_mode = false;
 
 function init(){
 	canvas = 			document.getElementById('canvas');
@@ -417,7 +417,7 @@ document.onkeydown = function(e){
 		}else{
 			running = true;
 		}*/
-		day_cycle_mode = false;
+		day_cycle_mode = true;
 	}
 }
 document.onkeyup = function(e){
