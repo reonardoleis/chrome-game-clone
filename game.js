@@ -1,6 +1,7 @@
 var canvas;
 var ctx;
-var running = true;
+var running = false;
+var dead = false;
 var animation_timer = 0;
 var animation_state = 0;
 var level_timer = 0;
@@ -21,6 +22,7 @@ var goal_timer = 0;
 var goal_state = 0;
 var charm_timer = 0;
 var night = false;
+var day_cycle_mode = true;
 
 function init(){
 	canvas = 			document.getElementById('canvas');
@@ -52,7 +54,7 @@ function gameLoop(){
 	if(running){
 	level_timer++;
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	if(night){
+	if(night && day_cycle_mode){
 		ctx.globalCompositeOperation='difference';
 		ctx.fillStyle='black';
 		ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -139,14 +141,15 @@ function gameLoop(){
 		score++;
 	}
 	dino.draw();
-	
-	ctx.fillStyle = 'rgba(0,0,0,.2)';
 	obstacleManager.drawObstacles();
 	dino.collision();
 	ground1.draw();
 	ground2.draw();
 	}
-	requestAnimationFrame(gameLoop);
+	if(!dead){
+		requestAnimationFrame(gameLoop);
+	}
+
 }
 
 function dino(){
@@ -249,15 +252,19 @@ function dino(){
 					if(this.minimumY>=obstacleManager.obstacles[i].pos[1]){
 						if(this.maximumY<=obstacleManager.obstacles[i].pos[1]){
 							running = false;
+							dead = true;
 						}
 					}else{
 						if(this.minimumY>=obstacleManager.obstacles[i].pos[1]-20){
 							running = false;
+							dead = true;
 						}
 					}
 				}else{
 					if(this.minimumY>=obstacleManager.obstacles[i].pos[1]){
 						running = false;
+						running = false;
+						dead = true;
 					}
 				}
 			}
@@ -389,19 +396,28 @@ document.onkeydown = function(e){
 	if(e.keyCode == 40){
 		if(!dino.isCrouching){
 			dino.isCrouching = true;
+			dino.jumpTimer = 25;
+
 		}
+		dino.descendingForce += 10;
+			console.log('ai sim mano');
 	}
 	if(e.keyCode == 38){
-		if(!dino.isJumping)
-			document.getElementById('audio').play();
-		dino.jump();
+		if(!running && !dead){
+			running = true;
+		}else if(running && !dead){
+			if(!dino.isJumping)
+				document.getElementById('audio').play();
+			dino.jump();
+		}
 	}
 	if(e.keyCode == 80){
-		if(running){
+		/*if(running){
 			running = false;
 		}else{
 			running = true;
-		}
+		}*/
+		day_cycle_mode = false;
 	}
 }
 document.onkeyup = function(e){
