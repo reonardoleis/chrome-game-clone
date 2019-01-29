@@ -11,9 +11,16 @@ var sprite2;
 var sprite_crouch1;
 var sprite_crouch2;
 var cacto1, cacto2, cacto3, flying1, flying2;
-var ground;
-var LEVEL_SPEED = 4;
+var ground, cloud;
+var clouds = [];
+var LEVEL_SPEED = 5;
 var score = 0;
+var goal = 100;
+var goal_text = 100;
+var goal_timer = 0;
+var goal_state = 0;
+var charm_timer = 0;
+var night = false;
 
 function init(){
 	canvas = 			document.getElementById('canvas');
@@ -29,6 +36,10 @@ function init(){
 	flying1 =			document.getElementById('flying1');
 	flying2 =			document.getElementById('flying2');
 	ground = 			document.getElementById('ground');
+	cloud = 			document.getElementById('cloud'); 
+	clouds[0] = [canvas.width, Math.floor(Math.random() * (canvas.height/2 - 100 - canvas.height/2) + canvas.height/2)];
+	clouds[1] = [1.5*canvas.width, Math.floor(Math.random() * (canvas.height/2 - 100 - canvas.height/2) + canvas.height/2)];
+	clouds[2] = [2*canvas.width, Math.floor(Math.random() * (canvas.height/2 - 100 - canvas.height/2) + canvas.height/2)];
 	dino = 				new dino();
 	obstacleManager =   new obstacleManager();
 	obstacleManager.generateFirstThree();
@@ -38,22 +49,90 @@ function init(){
 }
 
 function gameLoop(){
+	if(running){
 	level_timer++;
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.fillStyle = 'black';
-	if(score<10){
-		ctx.fillText("0000"+score, canvas.width-120, 25);
+	if(night){
+		ctx.globalCompositeOperation='difference';
+		ctx.fillStyle='black';
+		ctx.fillRect(0,0,canvas.width,canvas.height);
 	}
-	else if(score>=10 && score<100){
-		ctx.fillText("000"+score, canvas.width-120, 25);
+	if(score>=goal){
+		LEVEL_SPEED+=1;
+		goal_state = 1;
+		if(goal<=1000){
+			goal*=10;
+		}else{
+			goal+=1000;
+		}
+		document.getElementById('audio2').play();
 	}
-	else if(score>=100 && score<1000){
-		ctx.fillText("00"+score, canvas.width-120, 25);
-	}
-	else if(score>=1000 && score<10000){
-		ctx.fillText("0"+score, canvas.width-120, 25);
+	if(goal_state==1){
+		goal_timer++;
+		charm_timer++;
+		if(charm_timer<=20){
+			ctx.fillStyle = 'white';
+		}else if(charm_timer>=20){
+			ctx.fillStyle = 'gray';
+			if(charm_timer>=40){
+				charm_timer = 0;
+			}
+		}
 	}else{
-		ctx.fillText(""+score, canvas.width-120, 25);
+		ctx.fillStyle = 'gray';
+	}
+	if(goal_timer>=150){
+		if(night){
+			night = false;
+		}else{
+			night = true;
+		}
+		goal_state = 0;
+		goal_timer = 0;
+		if(goal_text<=1000){
+			goal_text*=10;
+		}else{
+			goal_text+=1000;
+		}
+		charm_timer = 0;
+	}
+	for(let i = 0; i < clouds.length; i++){
+		ctx.drawImage(cloud, clouds[i][0], clouds[i][1]);
+		clouds[i][0]-=LEVEL_SPEED*0.7;
+		if(clouds[i][0]<=-10){
+			clouds[i][0] = 1.5*canvas.width;
+		}
+	}
+	if(goal_state == 0){
+		if(score<10){
+			ctx.fillText("0000"+score, canvas.width-120, 25);
+		}
+		else if(score>=10 && score<100){
+			ctx.fillText("000"+score, canvas.width-120, 25);
+		}
+		else if(score>=100 && score<1000){
+			ctx.fillText("00"+score, canvas.width-120, 25);
+		}
+		else if(score>=1000 && score<10000){
+			ctx.fillText("0"+score, canvas.width-120, 25);
+		}else{
+			ctx.fillText(""+score, canvas.width-120, 25);
+		}
+	}else{
+		if(goal_text<10){
+			ctx.fillText("0000"+goal_text, canvas.width-120, 25);
+		}
+		else if(goal_text>=10 && goal_text<100){
+			ctx.fillText("000"+goal_text, canvas.width-120, 25);
+		}
+		else if(goal_text>=100 && goal_text<1000){
+			ctx.fillText("00"+goal_text, canvas.width-120, 25);
+		}
+		else if(goal_text>=1000 && goal_text<10000){
+			ctx.fillText("0"+goal_text, canvas.width-120, 25);
+		}else{
+			ctx.fillText(""+goal_text, canvas.width-120, 25);
+		}
 	}
 	if(level_timer>=8){
 		level_timer = 0;
@@ -66,8 +145,8 @@ function gameLoop(){
 	dino.collision();
 	ground1.draw();
 	ground2.draw();
-	if(running)
-		requestAnimationFrame(gameLoop);
+	}
+	requestAnimationFrame(gameLoop);
 }
 
 function dino(){
@@ -141,7 +220,6 @@ function dino(){
 				break;
 			}
 		}
-				ctx.fillRect(this.frontX, this.minimumY, 5, 5);
 				this.minimumY = this.y + sprite1.height - 5;
 	};
 	this.jump = function(){
@@ -205,37 +283,65 @@ function obstacleManager(){
 	this.obstacles = [];
 	this.drawObstacles = function(){
 		for(let i = 0; i < this.obstacles.length; i++){
-			this.obstacles[i].draw();
-			if(this.obstacles[i].x<=0){
-				this.obstacles.splice(0, 1);
-				this.generateNewObstacle();
+			if(this.obstacles[i].canDraw){
+				this.obstacles[i].draw();
+			}
+			if(this.obstacles[i].x<=-20){
+				if(this.obstacles[i].canDraw){
+					this.generateNewObstacle();
+				}
+				this.obstacles[i].canDraw = false;
+			}
+			if(this.obstacles[i].x<=-50){
+				this.obstacles.splice(i, 1);
+				
 			}
 		}
 	}
 	this.generateFirstThree = function(){
 		spacing = 0;
 		for(var i = 0; i < 3; i++){
-			type = Math.floor(Math.random() * (4 - 1 + 1)) + 1;
+			type = Math.floor(Math.random() * (3 - 1 + 1)) + 1;
 			x = canvas.width + spacing;
 			this.obstacles.push(new obstacle(type, x));
 			spacing += Math.floor(Math.random() * (300 - 1 + 250)) + 250;
 		}
 	}
 	this.generateNewObstacle = function(){
-		type = Math.floor(Math.random() * (4 - 1 + 1)) + 1;
-		spacing = Math.floor(Math.random() * (500 - 1 + 400)) + 400;
-		x = canvas.width + spacing;
-		this.obstacles.push(new obstacle(type, x));
+		spacing = 0;
+		y = false;
+		type = Math.floor(Math.random() * 4) + 1;      // returns a random integer from 0 to 10
+		spacing = Math.floor(Math.random() * (50)); 
+		console.log(type);
+		if(type==4){
+			state = Math.floor(Math.random() * 3) + 1; 
+			console.log('state: '+state);
+			if(state == 1){
+				y = canvas.height/2;
+			}else if(state == 2){
+				y = canvas.height/2-25;
+			}else if(state == 3){
+				y = canvas.height/2-50;
+			}
+		}
+		x = canvas.width * 2 + spacing;
+		this.obstacles.push(new obstacle(type, x, y));
 	}
 }
 
-function obstacle(type, x){
+function obstacle(type, x, y = false){
 	this.type = type;
+	this.animation_timer = 0;
+	this.canDraw = true;
 	this.pos = [];
 	this.frontX = false;
 	this.rearX = false;
 	this.x = x;
-	this.y = canvas.height/2;
+	if(y == false){
+		this.y = canvas.height/2;
+	}else{
+		this.y = y;
+	}
 	this.draw = function(){
 		if(this.type==1){
 			ctx.drawImage(cacto1, this.x, this.y+5);
@@ -259,13 +365,20 @@ function obstacle(type, x){
 			this.x-=LEVEL_SPEED;
 		}
 		else if(this.type==4){
-			ctx.drawImage(flying1, this.x, this.y+5);
-			this.y = canvas.height/2 - 20;
+			this.animation_timer++;
+			if(this.animation_timer<20){
+				ctx.drawImage(flying2, this.x, this.y+5);
+			}else if(this.animation_timer>=20){
+				ctx.drawImage(flying1, this.x, this.y+5);
+				if(this.animation_timer>=40){
+					this.animation_timer = 0;
+				}
+			}
 			this.pos = [this.x, this.y + flying1.height - 10];
 			this.frontX = this.x;
 			this.rearX = this.x + flying1.width - 5;
-			ctx.fillRect(this.x, this.pos[1], 5, 5);
 			this.x-=LEVEL_SPEED;
+
 		}
 
 	}
@@ -282,6 +395,13 @@ document.onkeydown = function(e){
 		if(!dino.isJumping)
 			document.getElementById('audio').play();
 		dino.jump();
+	}
+	if(e.keyCode == 80){
+		if(running){
+			running = false;
+		}else{
+			running = true;
+		}
 	}
 }
 document.onkeyup = function(e){
