@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="game.js"></script>
+	<style type="text/css">
+		@font-face {
+    		font-family: 'PressStart2P';
+    		src: url('assets/PressStart2P.ttf');
+		}
+	</style>
+	<title>Chrome's Game Clone</title>
+</head>
+<body>
+<div align="center">
+<canvas id="canvas" style="border:1px solid black" width="800" height="200"></canvas>
+</div>
+<script type="text/javascript">
+	window.onload = init;
+</script>
+<img src="assets/dino1.png" id="dino1" style="display:none"><img src='assets/dino2.png' id="dino2" style="display:none"><img src="assets/dino_crouch1.png" id="dino_crouch1" style="display:none"><img src="assets/dino_crouch2.png" id="dino_crouch2" style="display:none">
+<img src='assets/ground.png' id="ground" style="display:none"><img src="assets/cacto1.png" id="cacto1" style="display:none"><img src="assets/cacto2.png" id="cacto2" style="display:none"><img src="assets/cacto3.png" id="cacto3" style="display:none"><img src="assets/flying1.png" id="flying1" style="display:none"><img src="assets/flying2.png" id="flying2" style="display:none">
+<audio id="audio" controls style="display:none">
+  <source src="assets/jump.mp3" type="audio/mpeg">
+</audio>
+</body>
+</html>
